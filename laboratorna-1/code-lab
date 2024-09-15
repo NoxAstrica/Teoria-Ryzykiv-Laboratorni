@@ -1,0 +1,81 @@
+// VARIANT 12
+
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+class firm {
+private:
+    string firm_name;
+    float accident_probability;
+    float no_accident_probability;
+    int accident_payment;
+    int no_accident_payment;
+
+public:
+
+    firm(const string& name, float acc_prob, int acc_pay, int no_acc_pay) {
+        firm_name = name;
+        accident_probability = acc_prob;
+        no_accident_probability = 1 - acc_prob;
+        accident_payment = acc_pay;
+        no_accident_payment = no_acc_pay;
+    }
+
+    float risk_calculation() const {
+
+        cout << "Firm '" << firm_name << "' risk calculation: " << endl;
+
+        float moda = accident_probability * accident_payment + no_accident_probability * no_accident_payment;
+        cout << "Expected Value: " << moda << endl;
+
+        float V = accident_probability * pow(accident_payment - moda, 2) + no_accident_probability * pow(no_accident_payment - moda, 2);
+        cout << "Variance: " << V << endl;
+
+        float delta = sqrt(V);
+        cout << "Standard deviation: " << delta << endl;
+
+        float CV = delta / moda;
+        cout << "Coefficient of variation: " << CV << endl;
+
+        float SSV = sqrt(V);
+        cout << "Semiquadratic deviation: " << SSV << endl;
+
+        float CSV = SSV / moda;
+        cout << "Semivariation coefficient: " << CSV << endl;
+
+        cout << "Probability of no profit: " << no_accident_probability << endl;
+
+        float Z = accident_probability * accident_payment;
+        cout << "Expected loss: " << Z << endl;
+
+        cout << "-------------------------------------------------" << endl;
+
+        return SSV;
+    }
+
+    static void comp(const firm& A, const firm& B) {
+        float risk_A = A.risk_calculation();
+        float risk_B = B.risk_calculation();
+
+        if (risk_A < risk_B) {
+            cout << "It seems that investing in company '" << A.firm_name << "' is less risky." << endl;
+        } 
+        else if (risk_B < risk_A) {
+            cout << "It seems that investing in company '" << B.firm_name << "' is less risky." << endl;
+        } 
+        else {
+            cout << "Both companies have the same risk." << endl;
+        }
+    }
+};
+
+int main() {
+    firm company_A("A", 0.1, -10, 5);
+    firm company_B("B", 0.05, -25, 10);
+
+    firm::comp(company_A, company_B);
+
+    return 0;
+}
