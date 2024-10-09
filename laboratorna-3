@@ -1,0 +1,69 @@
+#include <iostream>
+#include <cmath>
+
+using namespace std;
+
+//завд 10 ряд 3
+
+float x1 = 20;
+float x2 = 30;
+
+float a = 50;
+float c = 0.1;
+
+float calc_possibility(float x) {
+    if (x >= x1 && x <= x2) {
+       return 1 / (x2 - x1);
+    }
+
+    else return 0;
+}
+
+float utility(float x) {
+    return a * pow(x, c);
+}
+
+void attitude (float U_ex, float Ux_de) {
+    if (-U_ex > Ux_de) cout << "Особа схильна до ризику";
+    if (-U_ex < Ux_de) cout << "Особа несхильна до ризику";
+    else cout << "Особа байдужа до ризику";
+}
+
+int main () {
+
+    float x, xmin, xmax;
+
+    cout << "Enter x (recommended: between 20 and 30)" << endl;
+    cin >> x;
+
+    float p = calc_possibility(x);
+
+    if (x1 > x2) {
+        xmin = x2;
+        xmax = x1;
+    }
+
+    else {
+        xmin = x1;
+        xmax = x2;
+    }
+
+    float expected_win = xmin * p - xmax * (1 - p);
+    
+    float Ux_ex = p * utility(xmin) + (1 - p) * utility(xmax);
+    
+    float determined_equivalent =  pow(Ux_ex / a, 1.0 / c);
+
+    float risk_reward = expected_win - determined_equivalent;
+
+    float Ux_de = utility(determined_equivalent);
+    
+    cout << "Сподіваний виграш: " << expected_win << endl;
+    cout << "Детермінований еквівалент: " << determined_equivalent << endl;
+    cout << "Премія за ризик: " << risk_reward << endl;
+
+    attitude(Ux_ex, Ux_de);
+
+    return 0;
+}
+
