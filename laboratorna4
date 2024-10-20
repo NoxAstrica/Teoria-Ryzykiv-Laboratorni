@@ -1,0 +1,189 @@
+//VARIANT 12
+
+#include <iostream>
+#include <cmath>
+#include <iomanip> 
+
+using namespace std;
+
+float m1, m2, mc; //норми прибутку
+float sigma1, sigma2, sigman; // ступінь ризику
+
+void variables_init(int A1[2], int A2[2], int bag[2]) {
+    m1 = A1[0];
+    sigma1 = A1[1];
+
+    m2 = A2[0];
+    sigma2 = A2[1];
+
+    mc = bag[0];
+    sigman = bag[1];
+}
+
+void bag_filling_min(float& m, float& sigma, float x[2], float p12) { //Oбчислити частки акції A1 та A2 у портфелі з мінімальним ризиком.
+    x[0] = (sigma2 * sigma2 - sigma1 * sigma2 * p12) / (sigma1 * sigma1 + sigma2 * sigma2 - 2 * sigma1 * sigma2 * p12);
+    x[1] = 1 - x[0];
+
+    m = x[0] * m1 + x[1] * m2; //Обчислити сподівану норму прибутку та оцінку ризику портфеля з мінімальним ризиком.
+    sigma = sqrt(x[0] * sigma1 * sigma1 + x[1] * sigma2 * sigma2 + 2 * x[0] * x[1] * sigma1 * sigma2 * p12);
+}
+
+void bag_filling_mc(float& sigma, float x[2], float p12) {  //За якої структури портфель буде мати сподівану норму прибутку 
+    x[0] = (mc - m2) / (m1 - m2);
+    x[1] = 1 - x[0];
+
+    sigma = sqrt(x[0] * sigma1 * sigma1 + x[1] * sigma2 * sigma2 + 2 * x[0] * x[1] * sigma1 * sigma2 * p12);
+}
+
+void bag_filling_sigma(float& m, float x[2]) { // За якої структури портфель буде мати оцінку ризику sigma n (%)?
+    x[0] = (sigman - sigma2) / (sigma1 - sigma2);
+    x[1] = 1 - x[0];
+
+    m = x[0] * m1 + x[1] * m2;
+}
+
+void output_res(float x[2], float m, float sigma) { 
+    cout << "Filling A1 = " << x[0] * 100 << "%, A2 = " << x[1] * 100 << "%" << endl;
+    cout << "Exp. norm of income: " << m << endl;
+    cout << "Risk: " << sigma << endl << endl;
+}
+
+int main() {
+ 
+    float m, sigma;
+    float x[2];
+
+    // варіант 12.1
+    int A1[2] = {10, 5};
+    int A2[2] = {50, 10};
+    int bag[2] = {35, 10};
+    float p12 = -0.6; // коефіцієнт кореляції
+
+    /*
+    // варіант 12.2
+    int A1[2] = {20, 10};
+    int A2[2] = {50, 15};
+    int bag[2] = {30, 12};
+    float p12 = -1;
+    */
+
+    /*
+    // варіант 12.3
+    int A1[2] = {40, 10};
+    int A2[2] = {60, 15};
+    int bag[2] = {55, 10};
+    float p12 = -0.8;
+    */
+
+    /*
+    // варіант 12.4
+    int A1[2] = {30, 10};
+    int A2[2] = {60, 15};
+    int bag[2] = {40, 12};
+    float p12 = 0.8;
+    */
+
+    /*
+    // варіант 12.5
+    int A1[2] = {20, 10};
+    int A2[2] = {30, 15};
+    int bag[2] = {25, 10};
+    float p12 = -0.3;
+    */
+
+    /*
+    // варіант 12.6
+    int A1[2] = {25, 20};
+    int A2[2] = {50, 30};
+    int bag[2] = {35, 25};
+    float p12 = -0.2;
+    */
+
+    /*
+    // варіант 12.7
+    int A1[2] = {40, 15};
+    int A2[2] = {50, 20};
+    int bag[2] = {46, 15};
+    float p12 = -0.3;
+    */
+
+    /*
+    // варіант 12.8
+    int A1[2] = {30, 15};
+    int A2[2] = {50, 20};
+    int bag[2] = {45, 16};
+    float p12 = 0.6;
+    */
+
+    /*
+    // варіант 12.9
+    int A1[2] = {40, 15};
+    int A2[2] = {20, 10};
+    int bag[2] = {35, 13};
+    float p12 = 0.7;
+    */
+
+    /*
+    // варіант 12.10
+    int A1[2] = {45, 10};
+    int A2[2] = {20, 5};
+    int bag[2] = {30, 6};
+    float p12 = -0.5;
+    */
+
+    /*
+    // варіант 12.11
+    int A1[2] = {30, 10};
+    int A2[2] = {40, 15};
+    int bag[2] = {35, 10};
+    float p12 = 0.5;
+    */
+
+    /*
+    // варіант 12.12
+    int A1[2] = {10, 6};
+    int A2[2] = {50, 30};
+    int bag[2] = {40, 10};
+    float p12 = -0.4;
+    */
+
+    /*
+    // варіант 12.13
+    int A1[2] = {30, 15};
+    int A2[2] = {50, 30};
+    int bag[2] = {45, 20};
+    float p12 = 0.4;
+    */
+
+    /*
+    // варіант 12.14
+    int A1[2] = {25, 10};
+    int A2[2] = {40, 20};
+    int bag[2] = {35, 15};
+    float p12 = 0.8;
+    */
+
+    /*
+    // варіант 12.15
+    int A1[2] = {20, 10};
+    int A2[2] = {40, 15};
+    int bag[2] = {35, 10};
+    float p12 = -0.8;
+    */
+
+    variables_init(A1, A2, bag);
+
+    bag_filling_min(m, sigma, x, p12);
+    cout << "Minimal risk portfolio" << endl;
+    output_res(x, m, sigma);
+
+    bag_filling_mc(sigma, x, p12);
+    cout << "Portfolio with expected income" << mc << ":" << endl;
+    output_res(x, mc, sigma);
+
+    bag_filling_sigma(m, x);
+    cout << "Portfolio with risk " << sigman << ":" << endl;
+    output_res(x, m, sigman);
+
+    return 0;
+}
