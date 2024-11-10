@@ -1,0 +1,195 @@
+#include <iostream>
+#include <iomanip>
+#include <cmath>
+
+using namespace std;
+
+/*
+variant 12
+ При переході на випуск нових видів продукції опрацьовані три варіанти рішення. Результати вибору залежать від невизначеного
+економічного середовища (від ціни на електроенергію та газ), яке може набувати чотири стани.
+Відомий функціонал оцінювання, що представляє собою матрицю прибутків від виробництва продукції (млрд. гр.):
+
+3 6 5 6
+1 3 9 5
+4 1 8 4
+
+Група експертів вважає, що поведінка економічного середовища найкращим чином враховується зваженою комбінацією найкращого (з коефіцієнтом 0,4) та найгіршого (з коефіцієнтом 0,6).
+Відшукати оптимальне рішення
+*/
+
+const int n = 4;
+
+const float F[n - 1][n] = {{3, 6, 5, 6},
+                {1, 3, 9, 5},
+                {4, 1, 8, 4}};
+
+float x[n - 1] = {};
+float G[n - 1] = {};
+float Phi[n - 1] = {};
+float HL[n - 1] = {};
+
+const float lambda1 = 0.4; //для найкращого
+const float lambda2 = 0.6; //для найгіршого
+
+///////////////////////////////////////// ADDITIONAL FUNCTIONS 
+
+void risks_table(const float F[n - 1][n], float risk[n - 1][n]) {
+    for (int j = 0; j < n; j++) {
+        float max = F[0][j];
+
+        for (int k = 1; k < n - 1; k++) {
+            if (F[k][j] > max) max = F[k][j];
+        }
+
+        for (int k = 0; k < n - 1; k++) {
+            risk[k][j] = fabs(F[k][j] - max);
+        }
+    }
+}
+
+void wald(float B[n - 1]) { // для F+
+
+    for (int k = 0; k < n - 1; k++) { // wald
+
+        float min = F[k][0];
+
+        for (int j = 0; j < n; j++) {
+            if (F[k][j] < min) min = F[k][j];
+        }
+        
+        B[k] = min;
+    }
+}
+
+/*
+void wald(float B[n - 1]) { // для F-
+
+    for (int k = 0; k < n - 1; k++) { // wald
+
+        float max = F[k][0];
+
+        for (int j = 0; j < n; j++) {
+            if (F[k][j] > max) max = F[k][j];
+        }
+        
+        B[k] = max;
+    }
+}
+*/
+
+///////////////////////////////////////// ACTUAL FUNCTIONS
+
+void goodwin_criterion(const float F[n - 1][n], float G[n - 1], float lambda) {
+
+    for (int k = 0; k < n - 1; k++) {
+        float max = F[k][0];
+        float min = F[k][0];
+
+        for (int j = 1; j < n; j++) {
+            if (F[k][j] > max) max = F[k][j];
+            if (F[k][j] < min) min = F[k][j];
+        }
+
+        G[k] = lambda * min + (1 - lambda) * max;
+    }
+    
+}
+
+void modified_criterion(const float F[n - 1][n], float Phi[n - 1], float lambda) {
+
+    float risk[n - 1][n] = {};
+
+    risks_table(F, risk);
+
+    for (int k = 0; k < n - 1; k++) { // risk * lambda
+        for (int j = 0; j < n; j++) {
+            risk[k][j] *= lambda;
+        }
+    }
+
+    float B[n - 1] = {};
+    wald(B);
+////////////////////////////
+    for (int k = 0; k < n - 1; k++) {
+        Phi[k] = (1 - lambda) * B[k];
+        for (int j = 0; j < n; j++) {
+            Phi[k] += lambda * risk[k][j]; 
+        }
+    }
+    
+}
+///////////////////////////////
+
+void hodgess_lehman_criterion(const float F[n - 1][n], float HL[n - 1], float lambda) {
+
+    float B[n - 1] = {};
+    wald(B);
+
+    for (int k = 0; k < n - 1; k++) {
+        float min = F[k][0];
+
+        for (int j = 1; j < n; j++) {
+            if (F[k][j] < min) min = F[k][j];
+        }
+
+        HL[k] = (1 - lambda) * B[k] + lambda * min;
+        cout << "HL : (1 - " << lambda << ") * " << B[k] << " + " << lambda << " * " << min << endl << endl; //????
+    }
+
+}
+
+void best_x (float A[n - 1], float best[2]) {
+    float max = A[0];
+    int max_i = 0;
+
+    for (int k = 1; k < n - 1; k++) {
+            if (A[k] > max) {
+                max = A[k];
+                max_i = k;
+            }
+    }
+
+    best[0] = max_i;
+    best[1] = max;
+
+}
+
+void output_best(float G[n - 1], float Phi[n - 1], float HL[n - 1], float best[2]) {
+
+    best_x(G, best);
+    for (int k = 0; k < n - 1; k++) cout << G[k] << " ";
+    cout << endl << "Best x by Goodwin: x" << best[0] << " ( value = " << best[1] << " )" << endl;
+
+    best_x(Phi, best);
+    for (int k = 0; k < n - 1; k++) cout << Phi[k] << " ";
+    cout << endl << "Best x by Modified: x" << best[0] << " ( value = " << best[1] << " )" << endl;
+
+    best_x(HL, best);
+    for (int k = 0; k < n - 1; k++) cout << HL[k] << " ";
+    cout << endl << "Best x by Hodgess-Lehman: x" << best[0] << " ( value = " << best[1] << " )" << endl;
+
+}
+
+int main() {
+    float best[2] = {};
+
+    cout << "For lambda = " << lambda1 << " :" << endl;
+
+    goodwin_criterion(F, G, lambda1);
+    modified_criterion(F, Phi, lambda1);
+    hodgess_lehman_criterion(F, HL, lambda1);
+    output_best(G, Phi, HL, best);
+
+    cout << endl << endl;
+    cout << "For lambda = " << lambda2 << " :" << endl;
+
+    goodwin_criterion(F, G, lambda2);
+    modified_criterion(F, Phi, lambda2);
+    hodgess_lehman_criterion(F, HL, lambda2);
+    output_best(G, Phi, HL, best);
+
+    return 0;
+
+}
+
