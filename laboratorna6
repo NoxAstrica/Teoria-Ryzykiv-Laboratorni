@@ -6,193 +6,389 @@ using namespace std;
 
 const int n = 4;
 
-float x[n] = {};
+float x[n] = {200, 250, 300, 350};
 
 float p[n] = {};
 
-int F_minus[n][n] = { {5, 10, 18, 25},
+float F_minus[n][n] = { {5, 10, 18, 25},
             {8, 7, 8, 23},
             {21, 18, 12, 21},
             {30, 22, 19, 15}};
         
-//////////////////////////////
+////////////////////////////// OPERATIONS FOR BOTH CASES
             
 void bernulli_laplace(float p[n]) { //for I4
     for (int i = 0; i < n; i++) {
-        p[i] = 1/n;
+        p[i] = 1.0/n;
     }
 }
 
-void bayes() { //after bernulli_laplace, I4
+void bayes(float F[n][n], float p[n], float B[n]) { //after bernulli_laplace, I4. chosen by my own preference
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            B[i] += F[i][j] * p[i];
+        }
+    } 
+}
+
+
+void wald(float F[n][n], float V[n], bool coefficient) { //for I5
+
+    if (coefficient == true) { // if F+
+        for (int k = 0; k < n; k++) {
+            float min = F[k][0];
+                for (int j = 1; j < n; j++) {
+                    if (F[k][j] < min) min = F[k][j];
+                }
+            V[k] = min;
+        }
+    }
+
+    else { // if F-
+        for (int k = 0; k < n; k++) {
+            float max = F[k][0];
+                for (int j = 1; j < n; j++) {
+                    if (F[k][j] > max) max = F[k][j];
+                }
+            V[k] = max;
+        }
+    }
+} 
+
+/////////////////////// NORMALIZATIONS OPTIONS
+
+void change_ingredient_norm(float F[n][n], float Fmod[n][n]) { 
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            Fmod[i][j] = -F[i][j];
+        }
+    }
 
 }
 
-void avsquare_variation() { //after bernulli_laplace, I4
+void dependable_norm(float F[n][n], float Fmod[n][n]) { //with min
+    float min[n] = {};
+
+    for (int j = 0; j < n; j++) {
+        min[j] = F[0][j];
+        for (int i = 0; i < n; i++) {
+            if (F[i][j] < min[j]) min[j] = F[i][j];
+        }
+    }
+
+    for (int j = 0; j < n; j++) {
+        for (int i = 0; i < n; i++) {
+            Fmod[i][j] = F[i][j] / min[j];
+        }
+    }
 }
 
+void savidzh(float F[n][n], float Fmod[n][n]) {
 
+    float min[n] = {};
+    float max[n] = {};
+    
 
-void wald(float F[n][n], float B[n]) { //for I5. max because F-
+    for (int j = 0; j < n; j++) {
 
-    for (int k = 0; k < n; k++) {
+        min[j] = F[0][j];
+        max[j] = F[0][j];
 
-        float max = F[k][0];
+        for (int i = 0; i < n; i++) {
+            if (F[i][j] < min[j]) min[j] = F[i][j];
+            if (F[i][j] > max[j]) max[j] = F[i][j];
+        }
+    }
 
-        for (int j = 1; j < n; j++) {
+    float diff[n] = {};
+    for (int j = 0; j < n; j++) {
+        diff[j] = max[j] - min[j];
+    }
 
-            if (F[k][j] > max) max = F[k][j];
+    for (int j = 0; j < n; j++) {
+        for (int i = 0; i < n; i++) {
+            Fmod[i][j] = (max[j] - F[i][j]) / diff[j];
+        }
+    }
 
+}
+
+/////////////////////// DECISION MAKING OPTIONS
+
+float summar_efficiency(float u[2], float F1[n], float F2[n], float Fmod[n], bool coefficient) {
+
+    for (int i = 0; i < n; i++) {
+        Fmod[i] = u[0] * F1[i] + u[1] * F2[i];
+    }
+
+    if (coefficient == true) { //if F+
+        float max = Fmod[0];
+        float max_i = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (Fmod[i] > max) {
+                max = Fmod[i];
+                max_i = i;
+            }
         }
 
-        B[k] = max;
+        return max_i;
     }
 
-    // float min = B[0];
-    // //??????????????????????
-    // for (int k = 0; k < n - 1; k++) {
-    //     if (B[k] < min) min = B[k];
-    // }
-    
-    // returnm min;
-    
-}
+    else { //if F-
+        float min = Fmod[0];
+        float min_i = 0;
 
-///////////////////////
+        for (int i = 0; i < n; i++) {
+            if (Fmod[i] < min) {
+                min = Fmod[i];
+                min_i = i;
+            }
+        }
 
-void change_ingredient_norm(float F[n], float Fmod[n]) { 
-
-    for (int i = 0; i < n; i++) {
-        Fmod[i] = -F[i];
-    }
-
-}
-
-void dependable_norm(float F[n], float Fmod[n]) { //with min
-    float min = F[0];
-
-    for (int i = 0; i < n; i++) {
-        if (F[i] < min) min = F[i];
-    }
-        
-    for (int i = 0; i < n; i++) {
-        Fmod[i] = F[i] / min;
+        return min_i;
     }
 }
 
-void savidzh(float F[n], float Fmod[n]) {
 
-    float min = F[0];
-    float max = F[0];
+void guarantee_result(float u[2], float F1[n], float F2[n], float Fmod1[n], float Fmod2[n], float res[2], bool coefficient) { //for F-
 
-    for (int i = 0; i < n; i++) {
-        if (F[i] < min) min = F[i];
+    for (int i = 0; i < n; i++) { //initialising f * u
+        Fmod1[i] = F1[i] * u[0];
+        Fmod2[i] = F2[i] * u[1];
+    }
+ 
+    if (coefficient == true) { // if F+
+        float min1 = Fmod1[0]; 
+        int min1_i = 0;
+        float min2 = Fmod2[0];
+        int min2_i = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (Fmod1[i] < min1) {
+                min1 = Fmod1[i];
+                min1_i = i;
+            }
+            if (Fmod2[i] < min1) {
+                min2 = Fmod2[i];
+                min1_i = i;
+            }
+        }
+
+        //return max of min
+        if (min1 > min2) {
+            res[0] = 1;
+            res[1] = min1_i;
+        }
+        else if (min2 > min1) {
+            res[0] = 2;
+            res[1] = min2_i;
+        }
+        else { //in case they are equal
+            res[0] = 0;
+            res[1] = min1_i;
+        }
+
     }
 
-    for (int i = 0; i < n; i++) {
-        if (F[i] > max) max = F[i];
+    else { // if F-
+        float max1 = Fmod1[0]; 
+        int max1_i = 0;
+        float max2 = Fmod2[0];
+        int max2_i = 0;
+
+        for (int i = 0; i < n; i++) {
+            if (Fmod1[i] > max1) {
+                max1 = Fmod1[i];
+                max1_i = i;
+            }
+            if (Fmod2[i] > max2) {
+                max2 = Fmod2[i];
+                max1_i = i;
+            }
+        }
+
+        //return min of max
+        if (max1 < max2) {
+            res[0] = 1;
+            res[1] = max1_i;
+        }
+        else if (max2 < max1) {
+            res[0] = 2;
+            res[1] = max2_i;
+        }
+        else { //in case they are equal
+            res[0] = 0;
+            res[1] = max1_i;
+        }
     }
-
-    float diff = max - min;
-
-    for (int i = 0; i < n; i++) {
-        Fmod[i] = (max - F[i]) / diff;
-    }
-
 }
 
-///////////////////////
-
-
-void linear_priority(float u[2], float F1[n], float F2[n], float res[n]) {
-
-    for (int i = 0; i < n; i++) {
-
-    res[i] = u[0] * F1[i] + u[1] * F2[i];
-
-    }
-
-}
-
-float summar_efficiency(float u[2], float F[n]) { //option1
-
-    float mod_min1[n] = {};
-    float mod_min2[n] = {};
-
-    for (int i = 0; i < n; i++) {
-        mod_min1[i] = F[i] * u[0];
-        mod_min2[i] = F[i] * u[1];
-    }
-
-    float min1 = mod_min1[0];  //min (f1)
-    float min2 = mod_min2[0];  //min (f2)
-
-    for (int i = 0; i < n; i++) {
-        if (mod_min1[i] < min1) min1 = mod_min1[i];
-        if (mod_min2[i] < min2) min2 = mod_min2[i];
-    }
-
-    if (min1 < min2) return min1; //return min of min
-    else return min2;
-
-}
-
-float guarantee_result(float u[2], float F[n]) { //option2
-    float mod_min1[n] = {};
-    float mod_min2[n] = {};
-
-    for (int i = 0; i < n; i++) {
-        mod_min1[i] = F[i] * u[0];
-        mod_min2[i] = F[i] * u[1];
-    }
-
-    float max1 = mod_min1[0];  //max (f1)
-    float max2 = mod_min2[0];  //max (f2)
-
-    for (int i = 0; i < n; i++) {
-        if (mod_min1[i] > max1) max1 = mod_min1[i];
-        if (mod_min2[i] > max2) max2 = mod_min2[i];
-    }
-
-    if (max1 < max2) return max1; //return min of max
-    else return max2;
-
-}
+//////////////////////////////////////////////////////////////////////////////////
 
 int main() {
 
-    //I4 & I5
+    //preparations for I4
 
-    //FOR var1 | зміна інгредієнта -d (q from k), лінійний принцип .. сумарна ефективність
+    float p[n] = {};
+    bernulli_laplace(p);
+
+    cout << "-------- var1 | зміна інгредієнта, сумарна ефективність --------" << endl << endl;
 
     float u1[2] = {0.5, 0.5}; 
 
-    change_ingredient_norm(F, f);
-    linear_priority(u1, F1, F2, res)
-    summar_efficiency(u1, F);
+    float Fmod1[n][n] = {};
+    change_ingredient_norm(F_minus, Fmod1); //F- -> F+
 
+    cout << "Fmod1:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << Fmod1[i][j] << " ";
+        }
+        cout << endl;
+    }
 
-    //FOR var2 | зміна інгредієнта -d (q from k), лінійний принцип .. гарантований результат
+    //I4
+    float B1[n] = {};
+    bayes(Fmod1, p, B1);
 
-    float u2[2] = {0.5, 0.5};
-    change_ingredient_norm(F, f);
-    linear_priority(u2, F1, F2, res)
-    guarantee_result(u4, f);
+    //I5
+    float V1[n] = {};
+    wald(Fmod1, V1, true);
 
-    //FOR var3 | відносна (f (q from k) / min f (q from k)), лінійний принцип .. сумарна ефективність
+    cout << endl << "I4: ";
+    for (int i = 0; i < n; i++) cout << B1[i] << " ";
+    cout << endl << "I5: ";
+    for (int i = 0; i < n; i++) cout << V1[i] << " ";
+
+    float Fres1[n] = {};
+    int x_i1 = summar_efficiency(u1, B1, V1, Fres1, true);
+
+    cout << endl << endl << "Final matrix:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres1[i] << " ";
+
+    cout << endl << endl << "Best decision is x" << x_i1 + 1 << "(" << x[x_i1] << " clients)";
+
+//////////////////////////////////////////////////////////////////////////////////
+
+    cout << endl << "-------- var2 | зміна інгредієнта, гарантований результат --------" << endl << endl;
+
+    cout << "Using same u, Fmod, B and V as var 1";
+
+    float Fres1_2[n] = {};
+    float Fres2_2[n] = {};
+    float res2[2] = {};
+    guarantee_result(u1, B1, V1, Fres1_2, Fres2_2, res2, true);
+    int x_i2 = res2[1];
+
+    cout << endl << endl << "Final matrix 1:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres1_2[i] << " ";
+    cout << endl << "Final matrix 2:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres2_2[i] << " ";
+
+    if (res2 == 0) { //in case F1 & F2 equally good
+        cout << "Both approaches suggest the same decision: x" << x_i2 + 1 << "(" << x[x_i2] << " clients)";
+    }
+
+    else {
+        cout << endl << "Best decision is x" << x_i2 + 1 << "(" << x[x_i2] << " clients), suggested by approach " << res2[0];
+
+    }
+
+//////////////////////////////////////////////////////////////////////////////////
+
+    cout << endl << "-------- var3 | відносна, сумарна ефективність --------" << endl << endl;
 
     float u3[2] = {0.4, 0.6};
 
-    dependable_norm(F, f);
-    linear_priority(u3, F1, F2, res)
-    summar_efficiency(u3, F);
+    float Fmod3[n][n] = {};
 
-    //FOR var4 | савіджа, лінійний принцип .. гарантований результат
+    dependable_norm(F_minus, Fmod3); //F- is still F-
+
+    cout << "Fmod3:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << Fmod3[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    //I4
+    float B3[n] = {};
+    bayes(Fmod3, p, B3);
+
+    //I5
+    float V3[n] = {};
+    wald(Fmod3, V3, false);
+
+    cout << endl << "I4: ";
+    for (int i = 0; i < n; i++) cout << B3[i] << " ";
+    cout << endl << "I5: ";
+    for (int i = 0; i < n; i++) cout << V3[i] << " ";
+
+    float Fres3[n] = {};
+    int x_i3 = summar_efficiency(u3, B3, V3, Fres3, false);
+
+    cout << endl << endl << "Final matrix:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres3[i] << " ";
+
+    cout << endl << endl << "Best decision is x" << x_i3 + 1 << "(" << x[x_i3] << " clients)";
+
+//////////////////////////////////////////////////////////////////////////////////
+
+    cout << endl << "-------- var4 | савіджа, гарантований результат --------" << endl << endl;
 
     float u4[2] = {0.3, 0.7};
 
-    savidzh(F, f);
-    linear_priority(u4, F1, F2, res)
-    guarantee_result(u4, f);
+    float Fmod4[n][n] = {};
+
+    savidzh(F_minus, Fmod4); //F- is still F-
+
+        cout << "Fmod4:" << endl;
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << Fmod4[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    //I4
+    float B4[n] = {};
+    bayes(Fmod4, p, B4);
+
+    //I5
+    float V4[n] = {};
+    wald(Fmod4, V4, false);
+
+    cout << endl << "I4: ";
+    for (int i = 0; i < n; i++) cout << B4[i] << " ";
+    cout << endl << "I5: ";
+    for (int i = 0; i < n; i++) cout << V4[i] << " ";
+
+    float Fres1_4[n] = {};
+    float Fres2_4[n] = {};
+    float res4[2] = {};
+    guarantee_result(u4, B4, V4, Fres1_4, Fres2_4, res4, true);
+    int x_i4 = res4[1];
+
+    cout << endl << endl << "Final matrix 1:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres1_4[i] << " ";
+    cout << endl << "Final matrix 2:" << endl;
+    for (int i = 0; i < n; i++) cout << Fres2_4[i] << " ";
+
+    if (res4 == 0) { //in case F1 & F2 equally good
+        cout << "Both approaches suggest the same decision: x" << x_i4 + 1 << "(" << x[x_i4] << " clients)";
+    }
+
+    else {
+        cout << endl << "Best decision is x" << x_i4 + 1 << "(" << x[x_i4] << " clients), suggested by approach " << res4[0];
+
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////
+
+    cout << endl << endl << "So, 4 variants offer us next solutions: x" << x_i1 + 1 << ", x" << x_i2 + 1 << ", x" << x_i3 + 1 << ", x" << x_i4 + 1;
 
     return 0;
 }
