@@ -4,6 +4,8 @@
 
 using namespace std;
 
+// WORKING WITH VARIANT 2
+
 const int n = 4;
 
 float x[n] = {200, 250, 300, 350};
